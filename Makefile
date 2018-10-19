@@ -1,105 +1,54 @@
-# Makefile for OpenWrt
-#
-# Copyright (C) 2007 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+include $(TOPDIR)/rules.mk
 
-TOPDIR:=${CURDIR}
-LC_ALL:=C
-LANG:=C
-TZ:=UTC
-export TOPDIR LC_ALL LANG TZ
+PKG_NAME:=pdnsd
+PKG_VERSION:=1.2.9b-par
+PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
-empty:=
-space:= $(empty) $(empty)
-$(if $(findstring $(space),$(TOPDIR)),$(error ERROR: The path to the OpenWrt directory must not include any spaces))
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/shadowsocks/pdnsd.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=a8e46ccba7b0fa2230d6c42ab6dcd92926f6c21d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+# PKG_MIRROR_MD5SUM:=
+# CMAKE_INSTALL:=1
 
-world:
+include $(INCLUDE_DIR)/package.mk
 
-export PATH:=$(TOPDIR)/staging_dir/host/bin:$(PATH)
+define Package/pdnsd-alt
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  DEPENDS:=+libpthread
+  TITLE:=Proxy DNS Server
+endef
 
-ifneq ($(OPENWRT_BUILD),1)
-  _SINGLE=export MAKEFLAGS=$(space);
+define Package/pdnsd-alt/description
+  pdnsd, is an IPv6 capable proxy DNS server with permanent caching (the cache
+  contents are written to hard disk on exit) that is designed to cope with
+  unreachable or down DNS servers (for example in dial-in networking).
 
-  override OPENWRT_BUILD=1
-  export OPENWRT_BUILD
-  GREP_OPTIONS=
-  export GREP_OPTIONS
-  CDPATH=
-  export CDPATH
-  include $(TOPDIR)/include/debug.mk
-  include $(TOPDIR)/include/depends.mk
-  include $(TOPDIR)/include/toplevel.mk
-else
-  include rules.mk
-  include $(INCLUDE_DIR)/depends.mk
-  include $(INCLUDE_DIR)/subdir.mk
-  include target/Makefile
-  include package/Makefile
-  include tools/Makefile
-  include toolchain/Makefile
+  pdnsd can be used with applications that do dns lookups, eg on startup, and
+  can't be configured to change that behaviour, to prevent the often
+  minute-long hangs (or even crashes) that result from stalled dns queries.
+endef
 
-$(toolchain/stamp-compile): $(tools/stamp-compile)
-$(target/stamp-compile): $(toolchain/stamp-compile) $(tools/stamp-compile) $(BUILD_DIR)/.prepared
-$(package/stamp-compile): $(target/stamp-compile) $(package/stamp-cleanup)
-$(package/stamp-install): $(package/stamp-compile)
-$(target/stamp-install): $(package/stamp-compile) $(package/stamp-install)
-check: $(tools/stamp-check) $(toolchain/stamp-check) $(package/stamp-check)
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include
+#TARGET_CFLAGS += -ggdb3
 
-printdb:
-	@true
+CMAKE_OPTIONS += -DDEBUG=1
 
-prepare: $(target/stamp-compile)
+CONFIGURE_ARGS += \
+		--with-cachedir=/var/pdnsd
 
-clean: FORCE
-	rm -rf $(BUILD_DIR) $(STAGING_DIR) $(BIN_DIR) $(OUTPUT_DIR)/packages/$(ARCH_PACKAGES) $(BUILD_LOG_DIR) $(TOPDIR)/staging_dir/packages
+define Package/pdnsd-alt/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/pdnsd $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/pdnsd-ctl/pdnsd-ctl $(1)/usr/bin/
+	#$(INSTALL_DIR) $(1)/etc/init.d
+	#$(INSTALL_BIN) ./files/pdnsd.init $(1)/etc/init.d/pdnsd
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/doc/pdnsd.conf $(1)/etc/
+endef
 
-dirclean: clean
-	rm -rf $(STAGING_DIR_HOST) $(STAGING_DIR_HOSTPKG) $(TOOLCHAIN_DIR) $(BUILD_DIR_BASE)/host $(BUILD_DIR_BASE)/hostpkg $(BUILD_DIR_TOOLCHAIN)
-	rm -rf $(TMP_DIR)
-
-ifndef DUMP_TARGET_DB
-$(BUILD_DIR)/.prepared: Makefile
-	@mkdir -p $$(dirname $@)
-	@touch $@
-
-tmp/.prereq_packages: .config
-	unset ERROR; \
-	for package in $(sort $(prereq-y) $(prereq-m)); do \
-		$(_SINGLE)$(NO_TRACE_MAKE) -s -r -C package/$$package prereq || ERROR=1; \
-	done; \
-	if [ -n "$$ERROR" ]; then \
-		echo "Package prerequisite check failed."; \
-		false; \
-	fi
-	touch $@
-endif
-
-# check prerequisites before starting to build
-prereq: $(target/stamp-prereq) tmp/.prereq_packages
-	@if [ ! -f "$(INCLUDE_DIR)/site/$(ARCH)" ]; then \
-		echo 'ERROR: Missing site config for architecture "$(ARCH)" !'; \
-		echo '       The missing file will cause configure scripts to fail during compilation.'; \
-		echo '       Please provide a "$(INCLUDE_DIR)/site/$(ARCH)" file and restart the build.'; \
-		exit 1; \
-	fi
-
-checksum: FORCE
-	$(call sha256sums,$(BIN_DIR),$(CONFIG_BUILDBOT))
-
-diffconfig: FORCE
-	mkdir -p $(BIN_DIR)
-	$(SCRIPT_DIR)/diffconfig.sh > $(BIN_DIR)/config.seed
-
-prepare: .config $(tools/stamp-compile) $(toolchain/stamp-compile)
-	$(_SINGLE)$(SUBMAKE) -r diffconfig
-
-world: prepare $(target/stamp-compile) $(package/stamp-compile) $(package/stamp-install) $(target/stamp-install) FORCE
-# $(_SINGLE)$(SUBMAKE) -r package/index
-# $(_SINGLE)$(SUBMAKE) -r checksum
-
-.PHONY: clean dirclean prereq prepare world package/symlinks package/symlinks-install package/symlinks-clean
-
-endif
+$(eval $(call BuildPackage,pdnsd-alt))

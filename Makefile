@@ -1,105 +1,36 @@
-# Makefile for OpenWrt
 #
-# Copyright (C) 2007 OpenWrt.org
+# Copyright (C) 2010-2011 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
-TOPDIR:=${CURDIR}
-LC_ALL:=C
-LANG:=C
-TZ:=UTC
-export TOPDIR LC_ALL LANG TZ
+include $(TOPDIR)/rules.mk
 
-empty:=
-space:= $(empty) $(empty)
-$(if $(findstring $(space),$(TOPDIR)),$(error ERROR: The path to the OpenWrt directory must not include any spaces))
+PKG_NAME:=automount
+PKG_VERSION:=1
+PKG_RELEASE:=20
+PKG_ARCH:=all
 
-world:
+include $(INCLUDE_DIR)/package.mk
 
-export PATH:=$(TOPDIR)/staging_dir/host/bin:$(PATH)
+define Package/automount
+  TITLE:=Mount autoconfig hotplug script.
+  MAINTAINER:=Lean
+  DEPENDS:=+block-mount +kmod-usb-storage +kmod-usb-storage-extras +kmod-fs-vfat +ntfs-3g +kmod-fs-ext4
+endef
 
-ifneq ($(OPENWRT_BUILD),1)
-  _SINGLE=export MAKEFLAGS=$(space);
+define Package/automount/description
+A usb autoconfig hotplug script.
+endef
 
-  override OPENWRT_BUILD=1
-  export OPENWRT_BUILD
-  GREP_OPTIONS=
-  export GREP_OPTIONS
-  CDPATH=
-  export CDPATH
-  include $(TOPDIR)/include/debug.mk
-  include $(TOPDIR)/include/depends.mk
-  include $(TOPDIR)/include/toplevel.mk
-else
-  include rules.mk
-  include $(INCLUDE_DIR)/depends.mk
-  include $(INCLUDE_DIR)/subdir.mk
-  include target/Makefile
-  include package/Makefile
-  include tools/Makefile
-  include toolchain/Makefile
+define Build/Compile
+endef
 
-$(toolchain/stamp-compile): $(tools/stamp-compile)
-$(target/stamp-compile): $(toolchain/stamp-compile) $(tools/stamp-compile) $(BUILD_DIR)/.prepared
-$(package/stamp-compile): $(target/stamp-compile) $(package/stamp-cleanup)
-$(package/stamp-install): $(package/stamp-compile)
-$(target/stamp-install): $(package/stamp-compile) $(package/stamp-install)
-check: $(tools/stamp-check) $(toolchain/stamp-check) $(package/stamp-check)
+define Package/automount/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/15-automount $(1)/etc/15-automount
+	$(INSTALL_BIN) ./files/zzz-move-automount $(1)/etc/uci-defaults/zzz-move-automount
+endef
 
-printdb:
-	@true
-
-prepare: $(target/stamp-compile)
-
-clean: FORCE
-	rm -rf $(BUILD_DIR) $(STAGING_DIR) $(BIN_DIR) $(OUTPUT_DIR)/packages/$(ARCH_PACKAGES) $(BUILD_LOG_DIR) $(TOPDIR)/staging_dir/packages
-
-dirclean: clean
-	rm -rf $(STAGING_DIR_HOST) $(STAGING_DIR_HOSTPKG) $(TOOLCHAIN_DIR) $(BUILD_DIR_BASE)/host $(BUILD_DIR_BASE)/hostpkg $(BUILD_DIR_TOOLCHAIN)
-	rm -rf $(TMP_DIR)
-
-ifndef DUMP_TARGET_DB
-$(BUILD_DIR)/.prepared: Makefile
-	@mkdir -p $$(dirname $@)
-	@touch $@
-
-tmp/.prereq_packages: .config
-	unset ERROR; \
-	for package in $(sort $(prereq-y) $(prereq-m)); do \
-		$(_SINGLE)$(NO_TRACE_MAKE) -s -r -C package/$$package prereq || ERROR=1; \
-	done; \
-	if [ -n "$$ERROR" ]; then \
-		echo "Package prerequisite check failed."; \
-		false; \
-	fi
-	touch $@
-endif
-
-# check prerequisites before starting to build
-prereq: $(target/stamp-prereq) tmp/.prereq_packages
-	@if [ ! -f "$(INCLUDE_DIR)/site/$(ARCH)" ]; then \
-		echo 'ERROR: Missing site config for architecture "$(ARCH)" !'; \
-		echo '       The missing file will cause configure scripts to fail during compilation.'; \
-		echo '       Please provide a "$(INCLUDE_DIR)/site/$(ARCH)" file and restart the build.'; \
-		exit 1; \
-	fi
-
-checksum: FORCE
-	$(call sha256sums,$(BIN_DIR),$(CONFIG_BUILDBOT))
-
-diffconfig: FORCE
-	mkdir -p $(BIN_DIR)
-	$(SCRIPT_DIR)/diffconfig.sh > $(BIN_DIR)/config.seed
-
-prepare: .config $(tools/stamp-compile) $(toolchain/stamp-compile)
-	$(_SINGLE)$(SUBMAKE) -r diffconfig
-
-world: prepare $(target/stamp-compile) $(package/stamp-compile) $(package/stamp-install) $(target/stamp-install) FORCE
-# $(_SINGLE)$(SUBMAKE) -r package/index
-# $(_SINGLE)$(SUBMAKE) -r checksum
-
-.PHONY: clean dirclean prereq prepare world package/symlinks package/symlinks-install package/symlinks-clean
-
-endif
+$(eval $(call BuildPackage,automount))

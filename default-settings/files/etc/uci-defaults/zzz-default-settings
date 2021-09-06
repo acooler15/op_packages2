@@ -1,0 +1,34 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete system.ntp.server
+	add_list system.ntp.server=ntp.aliyun.com
+	add_list system.ntp.server=time1.cloud.tencent.com
+	add_list system.ntp.server=time.ustc.edu.cn
+	add_list system.ntp.server=cn.pool.ntp.org
+	set system.@system[0].timezone=CST-8
+	set system.@system[0].zonename=Asia/Shanghai
+	commit system
+
+	set luci.main.lang=zh_cn
+	commit luci
+EOF
+
+# ln -sf /sbin/ip /usr/bin/ip
+
+sed -i 's#downloads.openwrt.org#mirrors.cloud.tencent.com/lede#g' /etc/opkg/distfeeds.conf
+# sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
+
+
+sed -i '/REDIRECT --to-ports 53/d' /etc/firewall.user
+echo 'iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+echo 'iptables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+echo '[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+echo '[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
+
+echo 'hsts=0' > /root/.wgetrc
+
+rm -rf /tmp/luci-modulecache/
+rm -f /tmp/luci-indexcache
+
+exit 0

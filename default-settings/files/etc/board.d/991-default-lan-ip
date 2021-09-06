@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. /lib/functions/uci-defaults.sh
+
+board_config_update
+
+json_is_a network object ||  exit 0
+
+json_select_object network
+	json_is_a lan object || exit 0
+	json_select_object lan
+		json_add_string ipaddr '192.168.123.1'
+	json_select ..
+json_select ..
+
+board_config_flush
+
+exit 0

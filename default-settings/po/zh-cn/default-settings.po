@@ -1,0 +1,3 @@
+msgid "Apply"
+msgstr "应用"
+

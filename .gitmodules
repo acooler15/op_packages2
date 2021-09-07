@@ -1,0 +1,55 @@
+[submodule "pdnsd-alt"]
+	path = pdnsd-alt
+	url = https://github.com/acooler15/op_packages2.git
+	branch = pdnsd-alt
+[submodule "redsocks2"]
+	path = redsocks2
+	url = https://github.com/acooler15/op_packages2.git
+	branch = redsocks2
+[submodule "dns2socks"]
+	path = dns2socks
+	url = https://github.com/acooler15/op_packages2.git
+	branch = dns2socks
+[submodule "ipt2socks"]
+	path = ipt2socks
+	url = https://github.com/acooler15/op_packages2.git
+	branch = ipt2socks
+[submodule "automount"]
+	path = automount
+	url = https://github.com/acooler15/op_packages2.git
+	branch = automount
+[submodule "microsocks"]
+	path = microsocks
+	url = https://github.com/acooler15/op_packages2.git
+	branch = microsocks
+[submodule "luci-app-jd-dailybonus"]
+	path = luci-app-jd-dailybonus
+	url = https://github.com/jerrykuku/luci-app-jd-dailybonus.git
+[submodule "luci-app-diskman"]
+	path = luci-app-diskman
+	url = https://github.com/lisaac/luci-app-diskman.git
+[submodule "luci-app-dockerman"]
+	path = luci-app-dockerman
+	url = https://github.com/lisaac/luci-app-dockerman.git
+[submodule "luci-app-unblockneteasemusic"]
+	path = luci-app-unblockneteasemusic
+	url = https://github.com/cnsilvan/luci-app-unblockneteasemusic.git
+[submodule "openwrt-upx"]
+	path = openwrt-upx
+	url = https://github.com/kuoruan/openwrt-upx.git
+[submodule "luci-theme-argon"]
+	path = luci-theme-argon
+	url = https://github.com/jerrykuku/luci-theme-argon.git
+	branch = master
+[submodule "luci-app-argon-config"]
+	path = luci-app-argon-config
+	url = https://github.com/jerrykuku/luci-app-argon-config.git
+	branch = master
+[submodule "ntfs3-oot"]
+	path = ntfs3-oot
+	url = https://github.com/acooler15/op_packages2.git
+	branch = ntfs3-oot
+[submodule "ntfs3-mount"]
+	path = ntfs3-mount
+	url = https://github.com/acooler15/op_packages2.git
+	branch = ntfs3-mount

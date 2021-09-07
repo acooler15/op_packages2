@@ -1,0 +1,40 @@
+name: CRON
+on:
+  schedule:
+    - cron: '0 2,8,14,20 * * *'
+  workflow_dispatch:
+jobs:
+  run_main:
+    runs-on: ubuntu-latest
+    steps:
+      # - uses: octokit/request-action@v2.x
+      #   id: update
+      #   with:
+      #     route: POST /repos/{repo}/actions/workflows/{workflow}/dispatches
+      #     repo: ${{ github.repository }}
+      #     workflow: update.yml
+      #     ref: master
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+      - uses: octokit/request-action@v2.x
+        id: run_master
+        with:
+          route: POST /repos/{repo}/actions/workflows/{workflow}/dispatches
+          repo: ${{ github.repository }}
+          workflow: checkout.yml
+          ref: master
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      # - run: "echo run master status: ${{ steps.run_master.outputs.status }}"
+
+      # - uses: octokit/request-action@v2.x
+      #   id: run_openwrt-2102
+      #   with:
+      #     route: POST /repos/{repo}/actions/workflows/{workflow}/dispatches
+      #     repo: ${{ github.repository }}
+      #     workflow: checkout.yml
+      #     ref: openwrt-21.02
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      # - run: "echo run openwrt-21.02 status: ${{ steps.run_openwrt-2102.outputs.status }}"
